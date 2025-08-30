@@ -1,61 +1,47 @@
-# IsonGa Realty
+# Isonga Realty Web App
 
-A modern real estate web application built for property management and seamless client interaction.  
-Live Demo 👉 [isongarealty.com](https://isongarealty.com)
+A modern real estate platform I developed for **Isonga Realty**, designed to simplify property management and property requests.  
+Built with performance, scalability, and clean UI in mind.
 
----
-
-##  Features
--  **Property Management** – Add, manage, and update property listings.  
--  **Request Property Management** – Clients can request management of their properties.  
--  **Email Notifications** – Each requested property automatically sends details via email.  
--  **Detailed Property Pages** – With full descriptions, location details, and an image gallery.  
--  **Image Gallery** – Beautiful property images stored in the database for better showcasing.  
+🌐 Live Demo → [isongarealty.com](https://isongarealty.com)
 
 ---
 
-## 🛠 Tech Stack
-**Frontend**  
-- ⚛ React (TypeScript + Vite)  
--  Zustand (state management)  
--  Axios (API calls)  
+## Features
 
-**Backend**  
--  Express.js  
--  SQLite3 (lightweight and fast database)  
+- **Property Management** – add, update, and manage property listings with ease.  
+- **Property Requests** – users can send property requests directly from the app.  
+- **Request Profiles & Email Alerts** – every property request is stored with a profile and also triggers an email notification.  
+- **Detailed Property Pages** – each property includes a full description and image gallery.  
+- **Smooth UI/UX** – responsive layouts powered by **React + Tailwind CSS**.  
+- **State Management** – handled with **Zustand** for simplicity and performance.  
 
 ---
 
-##  Getting Started
+## 🛠️ Tech Stack
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/isongarealty.git
-cd isongarealty
-```
+**Frontend**
+- React (with TypeScript + Vite) ⚡  
+- Tailwind CSS  
+- Zustand (state management)  
+- Axios (API requests)  
 
-### 2. Install dependencies
-# For frontend
-cd frontend
-npm install
+**Backend**
+- Express.js  
+- SQLite3 (database)  
 
-# For backend
-cd backend
-npm install
+---
 
-### 3. Run development servers
-# Frontend
-npm run dev
+## Deployment
 
-# Backend
-npm run start
+- Deployed in production for **Isonga Realty**  
+- Fully optimized for speed and SEO  
 
-🌍 Deployment
+---
 
-Currently deployed in production at:
-👉 isongarealty.com
+## Developer
 
-📬 Contact
+Developed by **Emmanuel** (Full Stack Developer) for **Isonga Realty**.  
+This project is owned by **Isonga Realty** — I handled the **design, frontend, backend, and deployment**.  
 
-For inquiries or collaborations:
-dreamwave610@example.com
+---
