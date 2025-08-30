@@ -39,6 +39,9 @@ Built with performance, scalability, and clean UI in mind.
 
 ---
 
+### Hosting
+- ☁️ Hostinger Cloud VPS  
+
 ## Developer
 
 Developed by **Emmanuel** (Full Stack Developer) for **Isonga Realty**.  
