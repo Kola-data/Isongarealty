@@ -25,9 +25,25 @@ const Profile: React.FC = () => {
 
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Error state management
+  const [error, setError] = useState<string | null>(null);
 
   const token = localStorage.getItem("token");
   const backendURL = "http://localhost:5000";
+
+  // Handle error display
+  useEffect(() => {
+    if (error) {
+      // Use setTimeout to ensure this runs after render
+      const timer = setTimeout(() => {
+        toast.error(error);
+        setError(null); // Clear error after showing
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // Fetch user info from token or API
   useEffect(() => {
@@ -83,7 +99,7 @@ const Profile: React.FC = () => {
       setUser((prev) => ({ ...prev, password: "" })); // clear password field
     } catch (err) {
       console.error("Error updating profile:", err);
-      toast.error("Failed to update profile");
+      setError("Failed to update profile");
     } finally {
       setLoading(false);
     }

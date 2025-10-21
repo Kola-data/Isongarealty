@@ -9,9 +9,10 @@ import { Heart, Eye, Star, Bed, Bath, Car, Square, ChevronLeft, ChevronRight, X,
   
  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Toaster, toast } from '@/components/ui/sonner';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiHelpers } from '@/utils/apiClient';
 
 interface Property {
   id: number;
@@ -52,7 +53,10 @@ const FeaturedListings: React.FC = () => {
   const [imagesLoading, setImagesLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const backendURL = 'https://api.isongarealty.com';
+  // Error state management
+  const [error, setError] = useState<string | null>(null);
+
+  const backendURL = API_ENDPOINTS.BASE_URL;
 
   // Currency toggle and formatter
   const [currency, setCurrency] = useState<'RWF' | 'USD'>('RWF');
@@ -69,14 +73,14 @@ const FeaturedListings: React.FC = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      const res = await axios.get<Property[]>(`${backendURL}/api/properties`);
-      if (Array.isArray(res.data)) {
-        setProperties(res.data);
-        setFilteredProperties(res.data);
+      setError(null);
+      const data = await apiHelpers.getProperties();
+      if (Array.isArray(data)) {
+        setProperties(data);
+        setFilteredProperties(data);
       }
     } catch (err) {
-      console.error('Failed to fetch properties:', err);
-      toast.error("Failed to fetch properties");
+      setError("Failed to fetch properties. Please check your internet connection.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +89,19 @@ const FeaturedListings: React.FC = () => {
   useEffect(() => {
     fetchProperties();
   }, []);
+
+  // Handle error display
+  useEffect(() => {
+    if (error) {
+      // Use setTimeout to ensure this runs after render
+      const timer = setTimeout(() => {
+        toast.error(error);
+        setError(null); // Clear error after showing
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // Filter & Search
   useEffect(() => {
@@ -110,12 +127,11 @@ const FeaturedListings: React.FC = () => {
     setImagesLoading(true);
     setCurrentImageIndex(0);
     try {
-      const res = await axios.get<PropertyImage[]>(`${backendURL}/api/properties/${property.id}/images`);
-      setPropertyImages(Array.isArray(res.data) ? res.data : []);
+      const data = await apiHelpers.getPropertyImages(property.id);
+      setPropertyImages(Array.isArray(data) ? data : []);
       setDetailsModalOpen(true);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch property images");
+      setError("Failed to fetch property images");
     } finally {
       setImagesLoading(false);
     }

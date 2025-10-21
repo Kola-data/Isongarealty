@@ -18,9 +18,25 @@ function Login() {
     password: "",
   });
   const [loading, setLoading] = React.useState(false);
+  
+  // Error state management
+  const [error, setError] = React.useState<string | null>(null);
 
   const navigate = useNavigate();
   const { setToken } = useAuthStore(); // ✅ token-only store
+
+  // Handle error display
+  React.useEffect(() => {
+    if (error) {
+      // Use setTimeout to ensure this runs after render
+      const timer = setTimeout(() => {
+        toast.error(error);
+        setError(null); // Clear error after showing
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,11 +53,11 @@ function Login() {
         toast.success("Login successful!");
         navigate("/dashboard");
       } else {
-        toast.error("Login failed. Please try again.");
+        setError("Login failed. Please try again.");
       }
     } catch (error: any) {
       console.error("Login failed:", error);
-      toast.error(error.response?.data?.message || "Login attempt failed. Please check your credentials.");
+      setError(error.response?.data?.message || "Login attempt failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }

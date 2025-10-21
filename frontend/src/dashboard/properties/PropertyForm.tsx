@@ -53,6 +53,22 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
 
   const [errors, setErrors] = useState<Partial<Record<keyof Property, string>>>({})
   const [loading, setLoading] = useState(false)
+  
+  // Error state management
+  const [error, setError] = useState<string | null>(null)
+
+  // Handle error display
+  React.useEffect(() => {
+    if (error) {
+      // Use setTimeout to ensure this runs after render
+      const timer = setTimeout(() => {
+        toast.error(error);
+        setError(null); // Clear error after showing
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleChange = <K extends keyof Property>(field: K, value: Property[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -115,7 +131,7 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
       onSubmit?.(formData)
     } catch (error: any) {
       console.error("Error:", error.response?.data || error.message)
-      toast.error("Failed to save property")
+      setError("Failed to save property")
     } finally {
       setLoading(false)
     }

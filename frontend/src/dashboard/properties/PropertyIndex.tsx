@@ -57,6 +57,9 @@ const PropertyIndex: React.FC = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null)
+  
+  // Error state management
+  const [error, setError] = useState<string | null>(null)
 
   const backendURL = "http://localhost:5000"
 
@@ -64,6 +67,7 @@ const PropertyIndex: React.FC = () => {
   const fetchProperties = async () => {
     try {
       setLoading(true)
+      setError(null)
       const res = await axios.get(`${backendURL}/api/properties`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -71,11 +75,11 @@ const PropertyIndex: React.FC = () => {
         setProperties(res.data)
       } else {
         console.error("Invalid properties data:", res.data)
-        toast.error("Failed to fetch properties")
+        setError("Failed to fetch properties")
       }
     } catch (err) {
       console.error("Error fetching properties:", err)
-      toast.error("Failed to fetch properties")
+      setError("Failed to fetch properties")
     } finally {
       setLoading(false)
     }
@@ -84,6 +88,19 @@ const PropertyIndex: React.FC = () => {
   useEffect(() => {
     fetchProperties()
   }, [])
+
+  // Handle error display
+  useEffect(() => {
+    if (error) {
+      // Use setTimeout to ensure this runs after render
+      const timer = setTimeout(() => {
+        toast.error(error)
+        setError(null) // Clear error after showing
+      }, 0)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   const filteredProperties = properties.filter((p) => {
     const matchesSearch =
@@ -121,7 +138,7 @@ const PropertyIndex: React.FC = () => {
       toast.success(`Deleted "${propertyToDelete.title}"`)
     } catch (err) {
       console.error("Error deleting property:", err)
-      toast.error("Failed to delete property")
+      setError("Failed to delete property")
     } finally {
       setDeleteModalOpen(false)
       setPropertyToDelete(null)
@@ -170,7 +187,7 @@ const PropertyIndex: React.FC = () => {
       setImageModalOpen(true)
     } catch (err) {
       console.error("Error fetching images:", err)
-      toast.error("Failed to fetch images")
+      setError("Failed to fetch images")
     } finally {
       setUploading(false)
     }
@@ -183,7 +200,7 @@ const PropertyIndex: React.FC = () => {
   const handleAddImages = async () => {
     if (!currentPropertyId || newImages.length === 0) return
     if (!token) {
-      toast.error("Unauthorized: Please login again")
+      setError("Unauthorized: Please login again")
       return
     }
 
@@ -208,13 +225,13 @@ const PropertyIndex: React.FC = () => {
         toast.success(res.data.message)
       } else {
         console.error("Invalid images data:", res.data)
-        toast.error("Failed to add images")
+        setError("Failed to add images")
       }
 
       setNewImages([])
     } catch (err) {
       console.error("Error adding images:", err)
-      toast.error("Failed to add images")
+      setError("Failed to add images")
     } finally {
       setUploading(false)
     }
@@ -229,7 +246,7 @@ const PropertyIndex: React.FC = () => {
       toast.success("Image deleted")
     } catch (err) {
       console.error("Error deleting image:", err)
-      toast.error("Failed to delete image")
+      setError("Failed to delete image")
     }
   }
 
@@ -247,7 +264,7 @@ const PropertyIndex: React.FC = () => {
       toast.success("All images deleted")
     } catch (err) {
       console.error("Error deleting all images:", err)
-      toast.error("Failed to delete all images")
+      setError("Failed to delete all images")
     }
   }
 
