@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Toaster, toast } from '@/components/ui/sonner';
 import { API_ENDPOINTS } from '@/config/api';
 import { apiHelpers } from '@/utils/apiClient';
+import { formatMoney, getExchangeRate, getLastUpdated } from '@/utils/currencyConverter';
 
 interface Property {
   id: number;
@@ -56,17 +57,28 @@ const FeaturedListings: React.FC = () => {
 
   const backendURL = API_ENDPOINTS.BASE_URL;
 
-  // Currency toggle and formatter
+  // Currency toggle and real-time converter
   const [currency, setCurrency] = useState<'RWF' | 'USD'>('RWF');
-  const EXCHANGE_RATE_RWF_PER_USD = 1300;
+  const [exchangeRate, setExchangeRate] = useState<number>(1300);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const formatMoney = (amountRwf: number) => {
-    if (currency === 'USD') {
-      const usd = amountRwf / EXCHANGE_RATE_RWF_PER_USD;
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(usd);
-    }
-    return `RWF ${new Intl.NumberFormat('en-US').format(amountRwf)}`;
-  };
+  // Update exchange rate from real-time API
+  useEffect(() => {
+    const updateRate = () => {
+      const rate = getExchangeRate();
+      const updated = getLastUpdated();
+      setExchangeRate(rate);
+      setLastUpdated(updated);
+    };
+
+    // Update immediately
+    updateRate();
+    
+    // Update every 5 minutes
+    const interval = setInterval(updateRate, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
 
   // ------------------- FETCH PROPERTIES -------------------
@@ -224,7 +236,7 @@ const FeaturedListings: React.FC = () => {
                       </span>
                     </div>
                     <div className="mb-4">
-                      <span className="text-2xl font-bold text-primary">{formatMoney(property.price)}</span>
+                      <span className="text-2xl font-bold text-primary">{formatMoney(property.price, currency)}</span>
                       {property.type === 'rent' && (
                         <span className="text-gray-600 ml-1">/month</span>
                       )}
@@ -322,7 +334,7 @@ const FeaturedListings: React.FC = () => {
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1">
           <span className="text-2xl sm:text-3xl font-bold text-primary">
-            {selectedProperty ? formatMoney(selectedProperty.price) : ''}
+            {selectedProperty ? formatMoney(selectedProperty.price, currency) : ''}
             {selectedProperty?.type === 'rent' && (
               <span className="text-lg sm:text-xl font-normal text-gray-600">/month</span>
             )}
