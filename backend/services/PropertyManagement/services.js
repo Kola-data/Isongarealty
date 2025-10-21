@@ -1,34 +1,89 @@
 import { db } from "../../db.js";
-import { cacheGet, cacheSet, cacheDel } from "../../utils/cache.js";
+import { cache } from "../../utils/cache.js";
 import fs from "fs";
 import path from "path";
 
 // ------------------- PROPERTIES -------------------
 
-export const getProperties = async () => {
+export const getProperties = async (options = {}) => {
   try {
+    const { 
+      useCache = true, 
+      ttl = 300, 
+      strategy = 'cache_aside',
+      includeStats = false 
+    } = options;
+    
     const cacheKey = "properties:all";
-    const cached = await cacheGet(cacheKey);
-    if (cached) return cached;
-
-    const properties = await db.all("SELECT * FROM properties ORDER BY created_at DESC");
-    await cacheSet(cacheKey, properties, 300);
-    return properties;
+    
+    if (useCache) {
+      // Use cache-aside pattern with enhanced error handling
+      const data = await cache.cacheAside(
+        cacheKey,
+        async () => {
+          console.log('[cache] Cache miss for properties:all, fetching from database');
+          return await db.all("SELECT * FROM properties ORDER BY created_at DESC");
+        },
+        ttl
+      );
+      
+      if (includeStats) {
+        return { data, stats: cache.getStats() };
+      }
+      return data;
+    } else {
+      // Direct database fetch
+      const properties = await db.all("SELECT * FROM properties ORDER BY created_at DESC");
+      return properties;
+    }
   } catch (error) {
     console.error("Error fetching properties:", error);
     throw error;
   }
 };
 
-export const getPropertyById = async (id) => {
+export const getPropertyById = async (id, options = {}) => {
   try {
+    const { 
+      useCache = true, 
+      ttl = 300, 
+      includeImages = false,
+      includeStats = false 
+    } = options;
+    
     const cacheKey = `properties:${id}`;
-    const cached = await cacheGet(cacheKey);
-    if (cached) return cached;
-
-    const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
-    if (property) await cacheSet(cacheKey, property, 300);
-    return property;
+    
+    if (useCache) {
+      const data = await cache.cacheAside(
+        cacheKey,
+        async () => {
+          console.log(`[cache] Cache miss for properties:${id}, fetching from database`);
+          const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
+          
+          if (property && includeImages) {
+            const images = await db.all("SELECT * FROM property_images WHERE property_id = ?", [id]);
+            property.images = images;
+          }
+          
+          return property;
+        },
+        ttl
+      );
+      
+      if (includeStats) {
+        return { data, stats: cache.getStats() };
+      }
+      return data;
+    } else {
+      const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
+      
+      if (property && includeImages) {
+        const images = await db.all("SELECT * FROM property_images WHERE property_id = ?", [id]);
+        property.images = images;
+      }
+      
+      return property;
+    }
   } catch (error) {
     console.error(`Error fetching property with id ${id}:`, error);
     throw error;
@@ -51,8 +106,15 @@ export const createProperty = async (propertyData) => {
     );
 
     const created = await getPropertyById(result.lastID);
-    await cacheDel("properties:all");
-    if (created?.id) await cacheDel(`properties:${created.id}`); // ensure fresh
+    
+    // Enhanced cache invalidation with write-through strategy
+    await cache.invalidateRelated("properties:all", [`properties:${result.lastID}`]);
+    
+    // Warm cache with new data
+    if (created) {
+      await cache.set(`properties:${result.lastID}`, created, 300);
+    }
+    
     return created;
   } catch (error) {
     console.error("Error creating property:", error);
@@ -76,8 +138,15 @@ export const updateProperty = async (id, propertyData) => {
     );
 
     const updated = await getPropertyById(id);
-    await cacheDel("properties:all");
-    await cacheDel(`properties:${id}`);
+    
+    // Enhanced cache invalidation
+    await cache.invalidateRelated("properties:all", [`properties:${id}`]);
+    
+    // Warm cache with updated data
+    if (updated) {
+      await cache.set(`properties:${id}`, updated, 300);
+    }
+    
     return updated;
   } catch (error) {
     console.error(`Error updating property with id ${id}:`, error);
@@ -106,8 +175,11 @@ export const deleteProperty = async (id) => {
 
     await db.run("DELETE FROM property_images WHERE property_id = ?", [id]);
     await db.run("DELETE FROM properties WHERE id = ?", [id]);
-    await cacheDel("properties:all");
-    await cacheDel(`properties:${id}`);
+    
+    // Enhanced cache invalidation
+    await cache.invalidateRelated("properties:all", [`properties:${id}`]);
+    
+    return { message: "Property deleted successfully" };
   } catch (error) {
     console.error(`Error deleting property with id ${id}:`, error);
     throw error;
@@ -129,9 +201,24 @@ export const imageUpload = async (propertyId, imagePath) => {
   }
 };
 
-export const getPropertyImages = async (propertyId) => {
+export const getPropertyImages = async (propertyId, options = {}) => {
   try {
-    return await db.all("SELECT * FROM property_images WHERE property_id = ?", [propertyId]);
+    const { useCache = true, ttl = 300 } = options;
+    const cacheKey = `property_images:${propertyId}`;
+    
+    if (useCache) {
+      const data = await cache.cacheAside(
+        cacheKey,
+        async () => {
+          console.log(`[cache] Cache miss for property_images:${propertyId}, fetching from database`);
+          return await db.all("SELECT * FROM property_images WHERE property_id = ?", [propertyId]);
+        },
+        ttl
+      );
+      return data;
+    } else {
+      return await db.all("SELECT * FROM property_images WHERE property_id = ?", [propertyId]);
+    }
   } catch (error) {
     console.error(`Error fetching images for property with id ${propertyId}:`, error);
     throw error;

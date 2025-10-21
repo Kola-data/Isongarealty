@@ -8,6 +8,7 @@ import authRouter from './services/auth/auth.js';
 import requestedPropertyRouter from './services/RequestedPropertyManagement/router.js';
 import profileRouter from './services/profileManagement/router.js';
 import dashboardRouter from "./services/dashboard/router.js";
+import cacheRouter from './routes/cache.js';
 
 dotenv.config();
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/requested-properties', requestedPropertyRouter);
 app.use('/api/profile', profileRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use('/api/cache', cacheRouter);
 
 // ---------------- ROOT & HEALTH CHECK ----------------
 app.get('/', (req, res) => res.json({ message: 'Welcome to the API' }));
