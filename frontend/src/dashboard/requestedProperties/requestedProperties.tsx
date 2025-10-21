@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal } from "lucide-react"
 import { Toaster, toast } from "@/components/ui/sonner"
+import { API_ENDPOINTS } from '@/config/api';
 import useAuthStore from "../stores/UserStore"
 
 interface Property {
@@ -54,7 +55,7 @@ const RequestedPropertyIndex: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("All")
   const [loading, setLoading] = useState(false)
 
-  const backendURL = "http://localhost:5000"
+  const backendURL = API_ENDPOINTS.BASE_URL
 
   // ------------------- FETCH PROPERTIES -------------------
   const fetchProperties = async () => {

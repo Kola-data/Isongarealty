@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Toaster, toast } from "@/components/ui/sonner"
 import PropertyForm, { Property } from "./PropertyForm"
 import useAuthStore from "../stores/UserStore"
+import { API_ENDPOINTS } from '@/config/api';
 
 interface PropertyImage {
   id: number
@@ -61,7 +62,7 @@ const PropertyIndex: React.FC = () => {
   // Error state management
   const [error, setError] = useState<string | null>(null)
 
-  const backendURL = "http://localhost:5000"
+  const backendURL = API_ENDPOINTS.BASE_URL
 
   // ------------------- FETCH PROPERTIES -------------------
   const fetchProperties = async () => {

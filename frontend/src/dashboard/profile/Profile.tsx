@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {jwtDecode} from "jwt-decode";
 import axios from "axios";
 import { Edit, Check } from "lucide-react";
+import { API_ENDPOINTS } from '@/config/api';
 
 interface User {
   id: number;
@@ -30,7 +31,7 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const token = localStorage.getItem("token");
-  const backendURL = "http://localhost:5000";
+  const backendURL = API_ENDPOINTS.BASE_URL;
 
   // Handle error display
   useEffect(() => {

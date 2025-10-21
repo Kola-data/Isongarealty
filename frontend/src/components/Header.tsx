@@ -8,6 +8,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
 import { toast } from '@/components/ui/sonner';
+import { API_ENDPOINTS } from '@/config/api';
 
 const PropertyForm = ({ formData, handleInputChange, handleSubmit }: any) => (
   <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -114,7 +115,7 @@ const Header = () => {
 
     try {
       // Send data to your backend
-      await axios.post('http://localhost:5000/api/requested-properties', {
+      await axios.post(`${API_ENDPOINTS.BASE_URL}/api/requested-properties`, {
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone: formData.phoneNumber,

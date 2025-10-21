@@ -7,6 +7,7 @@ import { Users, Building, FileText, ArrowRight, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import useAuthStore from "../stores/UserStore";
+import { API_ENDPOINTS } from '@/config/api';
 
 interface StatsType {
   totalUsers?: number;
@@ -25,7 +26,7 @@ const Home: React.FC = () => {
       if (!token) return;
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/dashboard/stats", {
+        const res = await axios.get(`${API_ENDPOINTS.BASE_URL}/api/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStats(res.data);

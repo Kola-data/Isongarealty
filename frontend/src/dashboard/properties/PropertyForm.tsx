@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Toaster, toast } from '@/components/ui/sonner';
 import useAuthStore from "../stores/UserStore" // import your store
+import { API_ENDPOINTS } from '@/config/api';
 
 export interface Property {
   id?: number
@@ -113,8 +114,8 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
       if (formData.main_image) formPayload.append("main_image", formData.main_image)
 
       const url = property?.id
-        ? `http://localhost:5000/api/properties/${property.id}`
-        : "http://localhost:5000/api/properties"
+        ? `${API_ENDPOINTS.PROPERTIES}/${property.id}`
+        : API_ENDPOINTS.PROPERTIES
       const method = property?.id ? "put" : "post"
 
       const response = await axios({

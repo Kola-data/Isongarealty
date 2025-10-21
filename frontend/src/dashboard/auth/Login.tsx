@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/sonner';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../stores/UserStore"; // ✅ updated store
+import { API_ENDPOINTS } from '@/config/api';
 
 function Login() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -42,7 +43,7 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", formData);
+      const response = await axios.post(API_ENDPOINTS.AUTH.LOGIN, formData);
 
       if (response.status === 200) {
         const { token } = response.data;
