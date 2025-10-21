@@ -15,9 +15,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-APP_DIR="/var/www/isonga-realty"
-DOMAIN=""
-REDIS_PASSWORD=""
+APP_DIR="/var/www/Isongarealty"
+DOMAIN="https://isongarealty.com/"
+REDIS_PASSWORD="Asdf@0780"
 JWT_SECRET=""
 
 # Function to print colored output
@@ -76,7 +76,7 @@ if [ -d "$APP_DIR/.git" ]; then
     git pull origin main
 else
     print_status "Cloning repository..."
-    git clone https://github.com/your-username/isonga-realty.git $APP_DIR
+    git clone https://github.com/kola-data/Isongarealty.git $APP_DIR
     cd $APP_DIR
 fi
 
@@ -124,7 +124,7 @@ sudo chmod -R 755 backend/uploads
 
 # Configure Nginx
 print_status "Configuring Nginx..."
-sudo tee /etc/nginx/sites-available/isonga-realty > /dev/null << EOF
+sudo tee /etc/nginx/sites-available/Isongarealty > /dev/null << EOF
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
@@ -185,7 +185,7 @@ server {
 EOF
 
 # Enable site
-sudo ln -sf /etc/nginx/sites-available/isonga-realty /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/Isongarealty /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
@@ -234,7 +234,7 @@ sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --e
 
 # Set up log rotation
 print_status "Setting up log rotation..."
-sudo tee /etc/logrotate.d/isonga-realty > /dev/null << EOF
+sudo tee /etc/logrotate.d/Isongarealty > /dev/null << EOF
 $APP_DIR/backend/logs/*.log {
     daily
     missingok
@@ -248,11 +248,11 @@ EOF
 
 # Create backup script
 print_status "Creating backup script..."
-sudo mkdir -p /var/backups/isonga-realty
+sudo mkdir -p /var/backups/Isongarealty
 cat > backup.sh << EOF
 #!/bin/bash
 DATE=\$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/var/backups/isonga-realty"
+BACKUP_DIR="/var/backups/Isongarealty"
 tar -czf "\$BACKUP_DIR/backup_\$DATE.tar.gz" -C $APP_DIR .
 find \$BACKUP_DIR -name "backup_*.tar.gz" -mtime +7 -delete
 EOF
@@ -308,7 +308,7 @@ echo "  pm2 restart isonga-backend    - Restart backend"
 echo "  sudo systemctl status redis   - Check Redis status"
 echo "  sudo nginx -t                 - Test Nginx configuration"
 echo ""
-echo "Backup location: /var/backups/isonga-realty/"
+echo "Backup location: /var/backups/Isongarealty/"
 echo "Logs location: /var/log/pm2/"
 echo ""
 print_status "Deployment completed successfully! 🚀"
