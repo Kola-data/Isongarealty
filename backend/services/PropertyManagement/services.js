@@ -1,4 +1,5 @@
 import { db } from "../../db.js";
+import { cacheGet, cacheSet, cacheDel } from "../../utils/cache.js";
 import fs from "fs";
 import path from "path";
 
@@ -6,7 +7,12 @@ import path from "path";
 
 export const getProperties = async () => {
   try {
+    const cacheKey = "properties:all";
+    const cached = await cacheGet(cacheKey);
+    if (cached) return cached;
+
     const properties = await db.all("SELECT * FROM properties ORDER BY created_at DESC");
+    await cacheSet(cacheKey, properties, 300);
     return properties;
   } catch (error) {
     console.error("Error fetching properties:", error);
@@ -16,7 +22,12 @@ export const getProperties = async () => {
 
 export const getPropertyById = async (id) => {
   try {
+    const cacheKey = `properties:${id}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return cached;
+
     const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
+    if (property) await cacheSet(cacheKey, property, 300);
     return property;
   } catch (error) {
     console.error(`Error fetching property with id ${id}:`, error);
@@ -39,7 +50,10 @@ export const createProperty = async (propertyData) => {
       [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image]
     );
 
-    return getPropertyById(result.lastID);
+    const created = await getPropertyById(result.lastID);
+    await cacheDel("properties:all");
+    if (created?.id) await cacheDel(`properties:${created.id}`); // ensure fresh
+    return created;
   } catch (error) {
     console.error("Error creating property:", error);
     throw error;
@@ -61,7 +75,10 @@ export const updateProperty = async (id, propertyData) => {
       [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image, id]
     );
 
-    return getPropertyById(id);
+    const updated = await getPropertyById(id);
+    await cacheDel("properties:all");
+    await cacheDel(`properties:${id}`);
+    return updated;
   } catch (error) {
     console.error(`Error updating property with id ${id}:`, error);
     throw error;
@@ -89,6 +106,8 @@ export const deleteProperty = async (id) => {
 
     await db.run("DELETE FROM property_images WHERE property_id = ?", [id]);
     await db.run("DELETE FROM properties WHERE id = ?", [id]);
+    await cacheDel("properties:all");
+    await cacheDel(`properties:${id}`);
   } catch (error) {
     console.error(`Error deleting property with id ${id}:`, error);
     throw error;

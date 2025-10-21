@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const DB_PATH = process.env.DB_PATH || './isonga_real_estate_db.db';
+const DB_PATH = process.env.DB_PATH || 'isonga_real_estate_db.db';
 
 export const db = await open({
   filename: DB_PATH,

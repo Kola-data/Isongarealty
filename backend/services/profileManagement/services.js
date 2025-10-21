@@ -15,16 +15,30 @@ export const getUserProfile = async (id) => {
 // Update user by ID
 export const updateUserProfile = async (id, { name, email, password }) => {
   try {
-    const params = [name, email];
-    let query = "UPDATE users SET name = ?, email = ?";
+    const updates = [];
+    const params = [];
 
+    // Dynamically add fields to update based on their existence
+    if (name !== undefined) {
+      updates.push("name = ?");
+      params.push(name);
+    }
+    if (email !== undefined) {
+      updates.push("email = ?");
+      params.push(email);
+    }
     if (password) {
       const hashed = await hashPassword(password);
-      query += ", password = ?";
+      updates.push("password = ?");
       params.push(hashed);
     }
+    
+    // If no fields are provided to update, we can exit early.
+    if (updates.length === 0) {
+      return { message: "No fields to update" };
+    }
 
-    query += " WHERE id = ?";
+    const query = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
     params.push(id);
 
     await db.run(query, params);
@@ -34,3 +48,4 @@ export const updateUserProfile = async (id, { name, email, password }) => {
     throw new Error("Failed to update profile");
   }
 };
+

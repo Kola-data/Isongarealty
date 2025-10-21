@@ -26,7 +26,7 @@ app.use('/api/users', userRouter);
 app.use('/api/properties', propertyRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/requested-properties', requestedPropertyRouter);
-app.use('/api/user', profileRouter);
+app.use('/api/profile', profileRouter);
 app.use("/api/dashboard", dashboardRouter);
 
 // ---------------- ROOT & HEALTH CHECK ----------------

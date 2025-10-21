@@ -35,7 +35,7 @@ const Profile: React.FC = () => {
       try {
         const decoded: any = jwtDecode(token);
         axios
-          .get(`${backendURL}/api/user/profile/${decoded.id}`, {
+          .get(`${backendURL}/api/profile/${decoded.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((res) => {
@@ -45,6 +45,7 @@ const Profile: React.FC = () => {
               email: res.data.email,
               password: "",
             });
+            // console.log("data view from db")
           })
           .catch((err) => {
             console.error("Failed to fetch user profile:", err);
@@ -73,7 +74,7 @@ const Profile: React.FC = () => {
     setLoading(true);
     try {
       await axios.put(
-        `${backendURL}/api/user/profile/${user.id}`,
+        `${backendURL}/api/profile?id=${user.id}`,
         { name: user.name, email: user.email, password: user.password },
         { headers: { Authorization: `Bearer ${token}` } }
       );

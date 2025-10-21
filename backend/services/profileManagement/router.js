@@ -5,7 +5,7 @@ import { authenticateJWT } from "../../utils/authMiddleware.js"; // optional JWT
 const router = express.Router();
 
 // Get user profile
-router.get("/profile/:id", authenticateJWT, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     const user = await getUserProfile(userId);
@@ -17,7 +17,7 @@ router.get("/profile/:id", authenticateJWT, async (req, res) => {
 });
 
 // Update user profile
-router.put("/profile", authenticateJWT, async (req, res) => {
+router.put("/", async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     const { name, email, password } = req.body;

@@ -152,8 +152,9 @@ const PropertyIndex: React.FC = () => {
     return <Badge className={colors[type]}>{type.toUpperCase()}</Badge>
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(price)
+  const formatPrice = (price: number, type?: string) => {
+    const base = `RWF ${new Intl.NumberFormat('en-US').format(price)}`
+    return type === 'rent' ? `${base}/month` : base
   }
 
   // ------------------- IMAGE HANDLERS -------------------
@@ -339,7 +340,7 @@ const PropertyIndex: React.FC = () => {
                       </TableCell>
                       <TableCell>{p.title}</TableCell>
                       <TableCell>{getTypeBadge(p.type)}</TableCell>
-                      <TableCell>{formatPrice(p.price)}</TableCell>
+                      <TableCell>{formatPrice(p.price, p.type)}</TableCell>
                       <TableCell>{p.address}</TableCell>
                       <TableCell>{p.city}</TableCell>
                       <TableCell>{getStatusBadge(p.status)}</TableCell>
@@ -426,7 +427,7 @@ const PropertyIndex: React.FC = () => {
             </DialogHeader>
 
             <div className="flex gap-3 mb-4">
-              <Input type="file" multiple accept="image/*" onChange={handleUploadImages} disabled={uploading} />
+              <Input type="file" multiple accept="image/*,.heic,.heif,.tiff,.tif,.bmp,.svg,.webp,.gif,.png,.jpg,.jpeg" onChange={handleUploadImages} disabled={uploading} />
               <Button onClick={handleAddImages} disabled={newImages.length === 0 || uploading}>
                 {uploading ? "Uploading..." : "Add Images"}
               </Button>

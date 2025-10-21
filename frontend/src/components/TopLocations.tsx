@@ -1,5 +1,8 @@
 
 import React from 'react';
+import Nyarutama from './Images/Nyarutarama.png'
+import Kanombe from './Images/Kanombe.png'
+import Kimironko from './Images/KImironko.png'
 
 const TopLocations = () => {
   const locations = [
@@ -8,21 +11,21 @@ const TopLocations = () => {
       name: 'Nyarutarama',
       subtitle: 'Premium Residential Area',
       propertyCount: 12,
-      image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&w=800&q=80',
+      image: Nyarutama,
     },
     {
       id: 2,
-      name: 'Gacuriro',
+      name: 'Kanombe',
       subtitle: 'Modern Business District',
       propertyCount: 8,
-      image: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=800&q=80',
+      image: Kanombe,
     },
     {
       id: 3,
-      name: 'Kinyinya',
+      name: 'Kimironko',
       subtitle: 'Family-Friendly Community',
       propertyCount: 15,
-      image: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=800&q=80',
+      image: Kimironko,
     }
   ];
 

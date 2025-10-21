@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner" // Import toaster
+import { Toaster, toast } from '@/components/ui/sonner';
 import useAuthStore from "../stores/UserStore" // import your store
 
 export interface Property {
@@ -70,7 +70,7 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
     if (!formData.price || formData.price <= 0) newErrors.price = "Valid price is required"
     if (!formData.address.trim()) newErrors.address = "Address is required"
     if (!formData.city.trim()) newErrors.city = "City is required"
-    if (!formData.area || formData.area <= 0) newErrors.area = "Valid area is required"
+    if (!formData.area || formData.area < 0) newErrors.area = "Valid area is required"
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -123,6 +123,7 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
+      <Toaster />
       <CardHeader>
         <CardTitle>{property ? "Edit Property" : "Add New Property"}</CardTitle>
         <CardDescription>{property ? "Update property info" : "Create a new property listing"}</CardDescription>
@@ -179,7 +180,7 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
 
             <div className="space-y-2">
               <Label htmlFor="area">Area (sq ft)</Label>
-              <Input id="area" type="number" value={formData.area} onChange={(e) => handleChange("area", parseFloat(e.target.value))} />
+              <Input id="area" type="number" min={0} value={formData.area} onChange={(e) => handleChange("area", parseFloat(e.target.value) || 0)} />
               {errors.area && <p className="text-sm text-destructive">{errors.area}</p>}
             </div>
           </div>
@@ -215,7 +216,7 @@ export default function PropertyForm({ property = null, onSubmit, onCancel }: Pr
 
           <div className="space-y-2">
             <Label htmlFor="main_image">Main Image</Label>
-            <Input id="main_image" type="file" onChange={handleFileChange} />
+            <Input id="main_image" type="file" accept="image/*,.heic,.heif,.tiff,.tif,.bmp,.svg,.webp,.gif,.png,.jpg,.jpeg" onChange={handleFileChange} />
           </div>
 
           <div className="flex gap-3 pt-4">
