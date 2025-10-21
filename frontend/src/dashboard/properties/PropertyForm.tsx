@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ChangeEvent, FormEvent } from "react"
+import React, { useState, ChangeEvent, FormEvent } from "react"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

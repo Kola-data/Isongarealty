@@ -115,11 +115,13 @@ const PropertyIndex: React.FC = () => {
 
   // ------------------- PROPERTY ACTIONS -------------------
   const handleAdd = () => {
+    console.log("Opening add property modal...")
     setSelectedProperty(null)
     setOpenModal(true)
   }
 
   const handleEdit = (property: Property) => {
+    console.log("Opening edit property modal for:", property.title)
     setSelectedProperty(property)
     setOpenModal(true)
   }
@@ -283,6 +285,12 @@ const PropertyIndex: React.FC = () => {
           <Button onClick={handleAdd} className="gap-2">
             <Plus className="h-4 w-4" /> Add Property
           </Button>
+          <Button onClick={() => console.log("Modal state:", openModal)} variant="outline">
+            Debug Modal State
+          </Button>
+          <Button onClick={() => setOpenModal(true)} variant="secondary">
+            Force Open Modal
+          </Button>
         </div>
 
         <Card>
@@ -402,7 +410,33 @@ const PropertyIndex: React.FC = () => {
         </Card>
 
         {/* Property Form Modal */}
-        <Dialog open={openModal} onOpenChange={setOpenModal}>
+        {openModal && <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999}}>Modal is open!</div>}
+        
+        {/* Simple test modal */}
+        {openModal && (
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            zIndex: 10000,
+            minWidth: '400px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <h2>Test Modal</h2>
+            <p>Modal is working!</p>
+            <button onClick={() => setOpenModal(false)}>Close</button>
+          </div>
+        )}
+        
+        <Dialog open={openModal} onOpenChange={(open) => {
+          console.log("Modal state changing to:", open)
+          setOpenModal(open)
+        }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>{selectedProperty ? "Edit Property" : "Add Property"}</DialogTitle>
@@ -410,11 +444,19 @@ const PropertyIndex: React.FC = () => {
                 Fill out the form to {selectedProperty ? "update" : "add"} a property.
               </DialogDescription>
             </DialogHeader>
-            <PropertyForm
+            <div>
+              <h3>Test Content</h3>
+              <p>This is a test to see if the modal content renders</p>
+              <button onClick={() => setOpenModal(false)}>Close Modal</button>
+            </div>
+            {/* <PropertyForm
               property={selectedProperty}
               onSubmit={handleSubmit}
-              onCancel={() => setOpenModal(false)}
-            />
+              onCancel={() => {
+                console.log("Canceling modal")
+                setOpenModal(false)
+              }}
+            /> */}
           </DialogContent>
         </Dialog>
 
