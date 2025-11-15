@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Search, Plus, MoreHorizontal, Edit, Trash2, XCircle, Image } from "lucide-react"
+import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Toaster, toast } from "@/components/ui/sonner"
 import PropertyForm, { Property } from "./PropertyForm"
@@ -61,6 +62,10 @@ const PropertyIndex: React.FC = () => {
   
   // Error state management
   const [error, setError] = useState<string | null>(null)
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const backendURL = API_ENDPOINTS.BASE_URL
 
@@ -112,6 +117,17 @@ const PropertyIndex: React.FC = () => {
     const matchesStatus = statusFilter === "All" || p.status === statusFilter
     return matchesSearch && matchesType && matchesStatus
   })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedProperties = filteredProperties.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, typeFilter, statusFilter])
 
   // ------------------- PROPERTY ACTIONS -------------------
   const handleAdd = () => {
@@ -170,8 +186,10 @@ const PropertyIndex: React.FC = () => {
     return <Badge className={colors[type]}>{type.toUpperCase()}</Badge>
   }
 
-  const formatPrice = (price: number, type?: string) => {
-    const base = `RWF ${new Intl.NumberFormat('en-US').format(price)}`
+  const formatPrice = (price: number, currency?: string, type?: string) => {
+    const currencySymbol = currency === 'USD' ? '$' : 'RWF '
+    const formatted = new Intl.NumberFormat('en-US').format(price)
+    const base = `${currencySymbol}${formatted}`
     return type === 'rent' ? `${base}/month` : base
   }
 
@@ -292,20 +310,21 @@ const PropertyIndex: React.FC = () => {
           </CardHeader>
           <CardContent>
             {/* Filters */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder="Search properties..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-orange-500 focus:border-orange-600 focus:ring-orange-500"
                 />
               </div>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 border rounded-md"
+                className="px-3 py-2 border-2 border-orange-500 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
+                autoComplete="off"
               >
                 <option value="All">All Types</option>
                 <option value="sale">Sale</option>
@@ -314,7 +333,8 @@ const PropertyIndex: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border rounded-md"
+                className="px-3 py-2 border-2 border-orange-500 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
+                autoComplete="off"
               >
                 <option value="All">All Status</option>
                 <option value="available">Available</option>
@@ -322,6 +342,25 @@ const PropertyIndex: React.FC = () => {
                 <option value="pending">Pending</option>
                 <option value="rented">Rented</option>
               </select>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="itemsPerPage" className="text-sm whitespace-nowrap">Items per page:</Label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="px-3 py-2 border-2 border-orange-500 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
+                  autoComplete="off"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
             </div>
 
             {/* Table */}
@@ -333,6 +372,7 @@ const PropertyIndex: React.FC = () => {
                     <TableHead>Title</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>Currency</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead>City</TableHead>
                     <TableHead>Status</TableHead>
@@ -341,7 +381,7 @@ const PropertyIndex: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProperties.map((p) => (
+                  {paginatedProperties.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         {p.main_image ? (
@@ -358,7 +398,10 @@ const PropertyIndex: React.FC = () => {
                       </TableCell>
                       <TableCell>{p.title}</TableCell>
                       <TableCell>{getTypeBadge(p.type)}</TableCell>
-                      <TableCell>{formatPrice(p.price, p.type)}</TableCell>
+                      <TableCell>{formatPrice(p.price, (p as any).currency, p.type)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{(p as any).currency || 'RWF'}</Badge>
+                      </TableCell>
                       <TableCell>{p.address}</TableCell>
                       <TableCell>{p.city}</TableCell>
                       <TableCell>{getStatusBadge(p.status)}</TableCell>
@@ -398,6 +441,58 @@ const PropertyIndex: React.FC = () => {
                 <div className="text-center py-8 text-muted-foreground">No properties found.</div>
               )}
             </div>
+
+            {/* Pagination */}
+            {!loading && filteredProperties.length > 0 && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredProperties.length)} of {filteredProperties.length} properties
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -1,5 +1,13 @@
-// API Configuration - Always use online API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.isongarealty.com';
+// API Configuration - Use local API for development, online API for production
+// In development, always use localhost unless explicitly set to online
+const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
+// Force localhost for development - override any .env setting
+const API_BASE_URL = isDevelopment ? 'http://localhost:5000' : (import.meta.env.VITE_API_URL || 'https://api.isongarealty.com');
+
+// Log which API is being used (only in development)
+if (isDevelopment) {
+  console.log(`[API Config] Using LOCAL API: ${API_BASE_URL}`);
+}
 
 export const API_ENDPOINTS = {
   BASE_URL: API_BASE_URL,

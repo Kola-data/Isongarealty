@@ -6,9 +6,12 @@ dotenv.config();
 
 const DB_PATH = process.env.DB_PATH || 'isonga_real_estate_db.db';
 
+// Ensure we're using the local database file (absolute path)
+const absoluteDbPath = DB_PATH.startsWith('/') ? DB_PATH : `${process.cwd()}/${DB_PATH}`;
+
 export const db = await open({
-  filename: DB_PATH,
+  filename: absoluteDbPath,
   driver: sqlite3.Database
 });
 
-console.log(`Connected to SQLite at ${DB_PATH}`);
+console.log(`[Database] Connected to LOCAL SQLite database at: ${absoluteDbPath}`);

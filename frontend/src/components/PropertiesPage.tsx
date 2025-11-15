@@ -2,24 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Eye, Star, Bed, Bath, Car, Square, ChevronLeft, ChevronRight, X, ImageIcon,
-  MapPin,
-  Home,
-  CheckCircle,
-  
- } from 'lucide-react';
+import { Bed, Bath, Car, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
 import { Toaster, toast } from '@/components/ui/sonner';
 import { API_ENDPOINTS } from '@/config/api';
 import { apiHelpers } from '@/utils/apiClient';
-import { formatMoney, getExchangeRate, getLastUpdated } from '@/utils/currencyConverter';
-
 interface Property {
   id: number;
   title: string;
   description: string;
   price: number;
+  currency?: string;
   address: string;
   city: string;
   type: string;
@@ -33,12 +26,6 @@ interface Property {
   reviews?: number;
 }
 
-interface PropertyImage {
-  id: number;
-  property_id: number;
-  image_url: string;
-}
-
 const FeaturedListings: React.FC = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
@@ -48,39 +35,19 @@ const FeaturedListings: React.FC = () => {
   const [filterType, setFilterType] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
 
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
-  const [imagesLoading, setImagesLoading] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Error state management
   const [error, setError] = useState<string | null>(null);
 
   const backendURL = API_ENDPOINTS.BASE_URL;
 
-  // Currency toggle and real-time converter
-  const [currency, setCurrency] = useState<'RWF' | 'USD'>('RWF');
-  const [exchangeRate, setExchangeRate] = useState<number>(1300);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  // Update exchange rate from real-time API
-  useEffect(() => {
-    const updateRate = () => {
-      const rate = getExchangeRate();
-      const updated = getLastUpdated();
-      setExchangeRate(rate);
-      setLastUpdated(updated);
-    };
-
-    // Update immediately
-    updateRate();
-    
-    // Update every 5 minutes
-    const interval = setInterval(updateRate, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, []);
+  // Format price with currency from database
+  const formatPrice = (price: number, currency?: string, type?: string) => {
+    const currencySymbol = currency === 'USD' ? '$' : 'RWF '
+    const formatted = new Intl.NumberFormat('en-US').format(price)
+    const base = `${currencySymbol}${formatted}`
+    return type === 'rent' ? `${base}/month` : base
+  }
 
   // Fetch properties
   const fetchProperties = async () => {
@@ -135,23 +102,9 @@ const FeaturedListings: React.FC = () => {
   }, [search, filterType, filterStatus, properties]);
 
   // View property details
-  const openDetailsModal = async (property: Property) => {
-    setSelectedProperty(property);
-    setImagesLoading(true);
-    setCurrentImageIndex(0);
-    try {
-      const data = await apiHelpers.getPropertyImages(property.id);
-      setPropertyImages(Array.isArray(data) ? data : []);
-      setDetailsModalOpen(true);
-    } catch (err) {
-      setError("Failed to fetch property images");
-    } finally {
-      setImagesLoading(false);
-    }
+  const openDetailsModal = (property: Property) => {
+    navigate(`/properties/${property.id}`);
   };
-
-  const prevImage = () => setCurrentImageIndex(prev => prev === 0 ? propertyImages.length - 1 : prev - 1);
-  const nextImage = () => setCurrentImageIndex(prev => prev === propertyImages.length - 1 ? 0 : prev + 1);
 
   return (
     <section id="properties" className="py-16 lg:py-24 bg-white">
@@ -168,33 +121,21 @@ const FeaturedListings: React.FC = () => {
           </p>
         </div>
 
-        {/* Currency Toggle */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex border rounded-full overflow-hidden">
-            <button
-              className={`px-4 py-2 ${currency === 'RWF' ? 'bg-primary text-white' : 'bg-white text-gray-700'}`}
-              onClick={() => setCurrency('RWF')}
-            >RWF</button>
-            <button
-              className={`px-4 py-2 ${currency === 'USD' ? 'bg-primary text-white' : 'bg-white text-gray-700'}`}
-              onClick={() => setCurrency('USD')}
-            >USD</button>
-          </div>
-        </div>
 
         {/* Filters & Search */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           <input
             type="text"
             placeholder="Search by city, title, or address"
-            className="px-4 py-2 border rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className="px-4 py-2 border-2 border-orange-500 rounded-lg w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+            className="px-4 py-2 border-2 border-orange-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
+            autoComplete="off"
           >
             <option value="All">All Types</option>
             <option value="Apartment">Apartment</option>
@@ -204,7 +145,8 @@ const FeaturedListings: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+            className="px-4 py-2 border-2 border-orange-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-600"
+            autoComplete="off"
           >
             <option value="All">All Status</option>
             <option value="Featured">Featured</option>
@@ -220,192 +162,77 @@ const FeaturedListings: React.FC = () => {
           <div className="flex justify-center items-center w-full py-20 text-gray-500">No properties found.</div>
         ) : (
           <div className="flex flex-wrap gap-8">
-            {filteredProperties.map((property) => (
-              <div key={property.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden w-full max-w-sm">
-                <div className="relative overflow-hidden">
-                  <img
-                    src={property.main_image ? `${backendURL}${property.main_image}` : 'https://via.placeholder.com/400x300'}
-                    alt={property.title}
-                    className="w-full h-64 object-contain bg-black/5"
-                  />
-                  <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-white text-sm font-semibold ${property.status === 'Featured' ? 'bg-accent' : property.status === 'Hot' ? 'bg-red-500' : 'bg-emerald-500'}`}>
-                    {property.status || 'New'}
+            {filteredProperties.map((property) => {
+              // Generate reference number (CR + property ID with leading zeros)
+              const refNumber = `CR ${String(property.id).padStart(3, '0')}`;
+              const propertyTypeText = property.type?.toUpperCase() === 'RENT' ? 'FOR RENT' : property.type?.toUpperCase() === 'SALE' ? 'FOR SALE' : 'FOR SALE';
+              // Get property type for badge (rent, sale, or other)
+              const propertyTypeBadge = property.type ? property.type.toUpperCase() : 'SALE';
+              
+              // Get badge color based on property type
+              const getTypeBadgeColor = (type?: string) => {
+                if (!type) return 'bg-orange-500';
+                const typeLower = type.toLowerCase();
+                if (typeLower === 'rent') return 'bg-green-600';
+                if (typeLower === 'sale') return 'bg-orange-500';
+                return 'bg-orange-500'; // default to orange for sale
+              };
+              
+              return (
+                <div key={property.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden w-full max-w-sm border-2 border-orange-500">
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={property.main_image ? `${backendURL}${property.main_image}` : 'https://via.placeholder.com/400x300'}
+                      alt={property.title}
+                      className="w-full h-64 object-cover bg-black/5"
+                    />
+                    {/* Property Type Badge Overlay with Type-based Color */}
+                    <div className={`absolute top-4 left-4 ${getTypeBadgeColor(property.type)} text-white px-3 py-1 rounded text-sm font-bold shadow-lg`}>
+                      {propertyTypeBadge}
+                    </div>
+                    {/* Property Type and Location Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4">
+                      <div className="text-white font-bold text-lg mb-1">
+                        {propertyTypeText} IN {property.city?.toUpperCase() || 'KIGALI'}
+                      </div>
+                      <div className="text-white/90 text-sm">
+                        {property.city?.toUpperCase() || 'KIGALI'}
+                      </div>
+                      {property.type === 'rent' && (
+                        <div className="text-white/80 text-xs mt-1">
+                          {property.bedrooms}BD | {property.bathrooms}BA | {property.area}SQM {formatPrice(property.price, property.currency, property.type)}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-6">
-                  <h3 className="font-heading font-semibold text-xl text-gray-800 mb-2">{property.title}</h3>
-                  <p className="text-gray-600 mb-4">{property.address}, {property.city}</p>
-                  <div className="mb-2">
-                    <span
-                      className={
-                        `inline-block px-2 py-1 text-xs font-semibold rounded-full ` +
-                        (property.type?.toLowerCase() === 'rent' ? 'bg-blue-100 text-blue-800' :
-                         property.type?.toLowerCase() === 'sale' ? 'bg-emerald-100 text-emerald-700' :
-                         'bg-gray-100 text-gray-700')
-                      }
+                  <div className="p-6">
+                    <h3 className="font-heading font-semibold text-xl text-gray-800 mb-2">{property.title}</h3>
+                    <p className="text-gray-600 mb-4">{property.address}, {property.city}</p>
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-primary">{formatPrice(property.price, property.currency, property.type)}</span>
+                      {property.type === 'rent' && (
+                        <span className="text-gray-600 ml-1">/month</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-gray-600 mb-6">
+                      <div className="flex items-center"><Bed className="w-5 h-5 mr-1" />{property.bedrooms}</div>
+                      <div className="flex items-center"><Bath className="w-5 h-5 mr-1" />{property.bathrooms}</div>
+                      <div className="flex items-center"><Car className="w-5 h-5 mr-1" />{property.garages}</div>
+                      <div className="flex items-center"><Square className="w-5 h-5 mr-1" />{property.area}m²</div>
+                    </div>
+                    <Button
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3"
+                      onClick={() => openDetailsModal(property)}
                     >
-                      Status: {property.type ? property.type.toUpperCase() : 'UNKNOWN'}
-                    </span>
+                      View Details
+                    </Button>
                   </div>
-                  <div className="mb-4">
-                    <span className="text-2xl font-bold text-primary">{formatMoney(property.price, currency)}</span>
-                    {property.type === 'rent' && (
-                      <span className="text-gray-600 ml-1">/month</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-gray-600 mb-6">
-                    <div className="flex items-center"><Bed className="w-5 h-5 mr-1" />{property.bedrooms}</div>
-                    <div className="flex items-center"><Bath className="w-5 h-5 mr-1" />{property.bathrooms}</div>
-                    <div className="flex items-center"><Car className="w-5 h-5 mr-1" />{property.garages}</div>
-                    <div className="flex items-center"><Square className="w-5 h-5 mr-1" />{property.area}m²</div>
-                  </div>
-                  <Button
-                    className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3"
-                    onClick={() => openDetailsModal(property)}
-                  >
-                    View Details
-                  </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-
-        <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
-          <DialogContent className="max-w-6xl w-[95vw] max-h-[95vh] p-0 bg-white rounded-2xl md:rounded-3xl shadow-2xl flex flex-col">
-
-            {/* ----------------- IMAGE SLIDER ----------------- */}
-            <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] overflow-hidden bg-gray-100 flex items-center justify-center">
-              {imagesLoading ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  <p className="text-gray-500 text-sm">Loading images...</p>
-                </div>
-              ) : propertyImages.length > 0 ? (
-                <>
-                  <div className="w-full h-full relative">
-            <img
-                      src={`${backendURL}${propertyImages[currentImageIndex].image_url}`}
-                      alt={`${selectedProperty?.title} - Image ${currentImageIndex + 1}`}
-              className="w-full h-full object-contain bg-black/5"
-                    />
-
-                    {/* Left/Right Buttons */}
-                    {propertyImages.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevImage}
-                          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow hover:bg-white hover:scale-110 transition-all duration-200"
-                        >
-                          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                        </button>
-                        <button
-                          onClick={nextImage}
-                          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-full shadow hover:bg-white hover:scale-110 transition-all duration-200"
-                        >
-                          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
-                        </button>
-                      </>
-                    )}
-
-                    {/* Image Counter */}
-                    <div className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
-                      {currentImageIndex + 1} / {propertyImages.length}
-                    </div>
-
-                    {/* Close Button */}
-                    <button
-                      onClick={() => setDetailsModalOpen(false)}
-                      className="absolute top-3 right-3 bg-white/80 p-2 rounded-full shadow hover:bg-white hover:scale-110 transition-all duration-200"
-                    >
-                      <X className="w-5 h-5 text-gray-700" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-3 text-gray-500">
-                  <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16" />
-                  <p className="text-sm sm:text-base">No images available</p>
-                </div>
-              )}
-            </div>
-
-            {/* ----------------- SCROLLABLE DETAILS ----------------- */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{selectedProperty?.title}</h2>
-                  <div className="flex items-center gap-2 mt-1 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>{selectedProperty?.address}, {selectedProperty?.city}</span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-start sm:items-end gap-1">
-                  <span className="text-2xl sm:text-3xl font-bold text-primary">
-                    {selectedProperty ? formatMoney(selectedProperty.price, currency) : ''}
-                    {selectedProperty?.type === 'rent' && (
-                      <span className="text-lg sm:text-xl font-normal text-gray-600">/month</span>
-                    )}
-                  </span>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400" /> {selectedProperty?.rating || 0}</div>
-                    <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {selectedProperty?.reviews || 0} reviews</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 text-sm sm:text-base">{selectedProperty?.description}</p>
-              </div>
-
-              {/* Features */}
-              <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Features</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { icon: Bed, value: selectedProperty?.bedrooms, label: "Bedrooms", color: "bg-primary/10 text-primary" },
-                    { icon: Bath, value: selectedProperty?.bathrooms, label: "Bathrooms", color: "bg-blue-100 text-blue-600" },
-                    { icon: Car, value: selectedProperty?.garages, label: "Garages", color: "bg-green-100 text-green-600" },
-                    { icon: Square, value: `${selectedProperty?.area}m²`, label: "Area", color: "bg-purple-100 text-purple-600" }
-                  ].map((feat, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm hover:shadow-md">
-                      <div className={`p-2 rounded-lg ${feat.color}`}><feat.icon className="w-5 h-5" /></div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium">{feat.label}</p>
-                        <p className="text-lg font-bold text-gray-900">{feat.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Property Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { icon: Home, label: "Property Type", value: selectedProperty?.type, bg: "bg-orange-100 text-orange-600" },
-                  { icon: CheckCircle, label: "Status", value: selectedProperty?.status, bg: "bg-emerald-100 text-emerald-600" },
-                  { icon: MapPin, label: "Location", value: selectedProperty?.city, bg: "bg-indigo-100 text-indigo-600" }
-                ].map((detail, i) => (
-                  <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all duration-200">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${detail.bg}`}><detail.icon className="w-5 h-5" /></div>
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 font-medium">{detail.label}</p>
-                        <p className="font-semibold text-gray-900 truncate">{detail.value}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-
-          </DialogContent>
-        </Dialog>
       </div>
     </section>
   );

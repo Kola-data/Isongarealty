@@ -53,6 +53,16 @@ export const apiHelpers = {
     }
   },
 
+  // Get property by ID with error handling
+  getPropertyById: async (propertyId: number) => {
+    try {
+      const response = await apiClient.get(`${API_ENDPOINTS.PROPERTIES}/${propertyId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // Get property images with error handling
   getPropertyImages: async (propertyId: number) => {
     try {

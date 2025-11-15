@@ -12,6 +12,7 @@ import { AuthRedirect } from "./dashboard/components/AuthRedirect";
 import Home from "./dashboard/index/Home";
 import PropertyIndex from "./dashboard/properties/PropertyIndex";
 import Properties from "./pages/properties";
+import PropertyDetails from "./pages/PropertyDetails";
 import RequestedPropertyIndex from "./dashboard/requestedProperties/requestedProperties";
 import Profile from "./dashboard/profile/Profile";
 
@@ -53,10 +54,12 @@ const App = () => (
 
           <Route 
             path="/properties" 
-            element={
-            <Properties />
+            element={<Properties />}
+          />
 
-            }
+          <Route 
+            path="/properties/:id" 
+            element={<PropertyDetails />}
           />
 
           <Route path='/dashboard/requested-properties' element={

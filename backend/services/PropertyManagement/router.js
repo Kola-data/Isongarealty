@@ -45,6 +45,16 @@ propertyRouter.get("/:id/images", async (req, res) => {
 // Create property with main image
 propertyRouter.post("/", authenticateJWT, upload.single("main_image"), async (req, res) => {
   try {
+    // Debug: Log all body fields to see what's being received
+    console.log(`[router] Create property: req.body keys:`, Object.keys(req.body));
+    console.log(`[router] Create property: req.body.currency="${req.body.currency}", type:`, typeof req.body.currency);
+    
+    // Ensure currency is properly extracted and validated
+    const currency = req.body.currency && (req.body.currency === "RWF" || req.body.currency === "USD") 
+      ? req.body.currency 
+      : "RWF";
+    console.log(`[router] Create property: received currency="${req.body.currency}", using="${currency}"`);
+    
     const propertyData = {
       title: req.body.title,
       description: req.body.description || "",
@@ -58,6 +68,7 @@ propertyRouter.post("/", authenticateJWT, upload.single("main_image"), async (re
       garages: Number(req.body.garages) || 0,
       area: Number(req.body.area) || 0,
       main_image: req.file ? `/uploads/${req.file.filename}` : null,
+      currency,
     };
 
     const property = await propertyServices.createProperty(propertyData);
@@ -82,6 +93,16 @@ propertyRouter.put("/:id", authenticateJWT, upload.single("main_image"), async (
       main_image = `/uploads/${req.file.filename}`;
     }
 
+    // Ensure currency is properly extracted and validated
+    // Debug: Log all body fields to see what's being received
+    console.log(`[router] Update property ${req.params.id}: req.body keys:`, Object.keys(req.body));
+    console.log(`[router] Update property ${req.params.id}: req.body.currency="${req.body.currency}", type:`, typeof req.body.currency);
+    
+    const currency = req.body.currency && (req.body.currency === "RWF" || req.body.currency === "USD") 
+      ? req.body.currency 
+      : (existing.currency || "RWF");
+    console.log(`[router] Update property ${req.params.id}: received currency="${req.body.currency}", using="${currency}", existing="${existing.currency}"`);
+
     const propertyData = {
       title: req.body.title,
       description: req.body.description || "",
@@ -95,6 +116,7 @@ propertyRouter.put("/:id", authenticateJWT, upload.single("main_image"), async (
       garages: Number(req.body.garages) || 0,
       area: Number(req.body.area) || 0,
       main_image,
+      currency,
     };
 
     const updated = await propertyServices.updateProperty(req.params.id, propertyData);

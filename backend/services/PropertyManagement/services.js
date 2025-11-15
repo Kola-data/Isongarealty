@@ -22,7 +22,12 @@ export const getProperties = async (options = {}) => {
         cacheKey,
         async () => {
           console.log('[cache] Cache miss for properties:all, fetching from database');
-          return await db.all("SELECT * FROM properties ORDER BY created_at DESC");
+          const properties = await db.all("SELECT * FROM properties ORDER BY created_at DESC");
+          // Ensure all properties have currency defaulted to RWF if NULL
+          return properties.map(p => ({
+            ...p,
+            currency: p.currency && p.currency !== null ? p.currency : "RWF"
+          }));
         },
         ttl
       );
@@ -34,7 +39,11 @@ export const getProperties = async (options = {}) => {
     } else {
       // Direct database fetch
       const properties = await db.all("SELECT * FROM properties ORDER BY created_at DESC");
-      return properties;
+      // Ensure all properties have currency defaulted to RWF if NULL
+      return properties.map(p => ({
+        ...p,
+        currency: p.currency && p.currency !== null ? p.currency : "RWF"
+      }));
     }
   } catch (error) {
     console.error("Error fetching properties:", error);
@@ -60,6 +69,12 @@ export const getPropertyById = async (id, options = {}) => {
           console.log(`[cache] Cache miss for properties:${id}, fetching from database`);
           const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
           
+          // Ensure currency has a default value if NULL or undefined
+          if (property && (!property.currency || property.currency === null)) {
+            property.currency = "RWF";
+            console.log(`[getPropertyById] Property ${id} had NULL currency, defaulting to RWF`);
+          }
+          
           if (property && includeImages) {
             const images = await db.all("SELECT * FROM property_images WHERE property_id = ?", [id]);
             property.images = images;
@@ -70,12 +85,22 @@ export const getPropertyById = async (id, options = {}) => {
         ttl
       );
       
+      // Ensure currency has a default value if NULL or undefined
+      if (data && (!data.currency || data.currency === null)) {
+        data.currency = "RWF";
+      }
+      
       if (includeStats) {
         return { data, stats: cache.getStats() };
       }
       return data;
     } else {
       const property = await db.get("SELECT * FROM properties WHERE id = ?", [id]);
+      
+      // Ensure currency has a default value if NULL or undefined
+      if (property && (!property.currency || property.currency === null)) {
+        property.currency = "RWF";
+      }
       
       if (property && includeImages) {
         const images = await db.all("SELECT * FROM property_images WHERE property_id = ?", [id]);
@@ -96,13 +121,18 @@ export const createProperty = async (propertyData) => {
       title, description, price, address, city,
       type = "sale", status = "available", bedrooms = 0,
       bathrooms = 0, garages = 0, area = 0, main_image = null,
+      currency = "RWF",
     } = propertyData;
+
+    // Ensure currency is valid (RWF or USD), default to RWF if not
+    const validCurrency = (currency && (currency === "RWF" || currency === "USD")) ? currency : "RWF";
+    console.log(`[createProperty] Creating property with currency: ${validCurrency}`);
 
     const result = await db.run(
       `INSERT INTO properties 
-        (title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image]
+        (title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image, currency) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image, validCurrency]
     );
 
     const created = await getPropertyById(result.lastID);
@@ -126,15 +156,19 @@ export const updateProperty = async (id, propertyData) => {
   try {
     const {
       title, description, price, address, city,
-      type, status, bedrooms, bathrooms, garages, area, main_image
+      type, status, bedrooms, bathrooms, garages, area, main_image, currency
     } = propertyData;
+
+    // Ensure currency is valid (RWF or USD), default to RWF if not
+    const validCurrency = (currency && (currency === "RWF" || currency === "USD")) ? currency : "RWF";
+    console.log(`[updateProperty] Updating property ${id} with currency: ${validCurrency} (received: ${currency})`);
 
     await db.run(
       `UPDATE properties SET
         title = ?, description = ?, price = ?, address = ?, city = ?, type = ?, status = ?,
-        bedrooms = ?, bathrooms = ?, garages = ?, area = ?, main_image = ?, updated_at = CURRENT_TIMESTAMP
+        bedrooms = ?, bathrooms = ?, garages = ?, area = ?, main_image = ?, currency = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image, id]
+      [title, description, price, address, city, type, status, bedrooms, bathrooms, garages, area, main_image, validCurrency, id]
     );
 
     const updated = await getPropertyById(id);
