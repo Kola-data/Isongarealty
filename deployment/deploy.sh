@@ -122,6 +122,15 @@ mkdir -p backend/uploads
 sudo chown -R www-data:www-data backend/uploads
 sudo chmod -R 755 backend/uploads
 
+# Fix database permissions
+print_status "Fixing database permissions..."
+mkdir -p backend
+sudo chown -R www-data:www-data backend
+sudo chmod 755 backend
+if [ -f backend/isonga_real_estate_db.db ]; then
+    sudo chmod 664 backend/isonga_real_estate_db.db
+fi
+
 # Configure Nginx
 print_status "Configuring Nginx..."
 sudo tee /etc/nginx/sites-available/Isongarealty > /dev/null << EOF
